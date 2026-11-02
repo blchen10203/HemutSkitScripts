@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Hemut Skit Generator
 
-## Getting Started
+A one-screen tool for the Hemut team. Fill in any of the optional fields, press generate, and get a Cluely-style skit script built around current TikTok and Instagram trends. It uses Claude with web search. There is no password and no database.
 
-First, run the development server:
+## Changing the content
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+All the wording the tool works from lives in the `content` folder. Edit the files, commit, and Vercel redeploys.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- `content/formats/*.md`: one file per skit format. The `name:` line at the top of each file is the label in the dropdown. Add a file to add a format.
+- `content/references.md`: reference skits and styles to imitate.
+- `content/hemut.md`: what Hemut is and how to talk about it.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Run it on your computer
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Copy `.env.example` to `.env.local` and put your Anthropic API key after `ANTHROPIC_API_KEY=`.
+2. `npm install`, then `npm run dev`.
+3. Open http://localhost:3000.
 
-## Learn More
+`npm test` runs the tests and `npm run build` checks a production build.
 
-To learn more about Next.js, take a look at the following resources:
+## Setup checklist (one time)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. In Anthropic Console, create a dedicated workspace for this tool with a monthly spend limit (suggest $20). Create the API key inside that workspace.
+2. Import this repo into Vercel and add `ANTHROPIC_API_KEY` under Project Settings, Environment Variables. Redeploy.
+3. Vercel's Hobby plan is for non-commercial use only. Confirm whether Hemut should be on Hobby or Pro.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Smoke test (after setup)
 
-## Deploy on Vercel
+This spends a few cents of real API credit. Run it with the real key, locally or on the deployed site.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Generate one script for each tie-in setting: Off, Light, Central.
+- Each script has all 7 sections, and the Trend section has a source link.
+- "Searching trends..." shows while it works, then goes away.
+- Use one rewrite option and check that the script changes.
+- The copy button copies the script.
