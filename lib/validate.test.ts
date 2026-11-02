@@ -47,3 +47,10 @@ describe("validateRequest", () => {
     expect(validateRequest(req({ format: "pov" }), slugs).ok).toBe(true);
   });
 });
+
+test("history-limit errors tell the user to regenerate", () => {
+  for (const body of [req({}, Array.from({ length: 11 }, () => u())), req({}, [u(), { role: "assistant", content: "a".repeat(300_001) }, u()])]) {
+    const r = validateRequest(body, slugs);
+    expect(!r.ok && r.error).toMatch(/ Hit Regenerate to start fresh\.$/);
+  }
+});

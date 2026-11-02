@@ -12,7 +12,7 @@ const TIE_INS: [TieIn, string][] = [["off", "Off"], ["light", "Light"], ["centra
 const LENGTHS: SkitLength[] = ["15s", "30s", "60s"];
 
 const SHAPE = [
-  ["# Title", "One line"],
+  ["## Title", "One line"],
   ["## Trend", "What's trending this week, why it fits, the source"],
   ["## Hooks", "Three openings for the first two seconds"],
   ["## Cast", "Name, role, one line of personality each"],
@@ -36,6 +36,8 @@ export default function SkitForm({ formats }: { formats: FormatOption[] }) {
   const [instruction, setInstruction] = useState("");
   const [copyNote, setCopyNote] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
+  // Inputs as sent by the last Generate/Regenerate; rewrites replay these so the server rebuilds the same first message.
+  const sentInputs = useRef<SkitInputs>(DEFAULTS);
 
   const set = <K extends keyof SkitInputs>(key: K, value: SkitInputs[K]) =>
     setInputs((i) => ({ ...i, [key]: value }));
@@ -43,7 +45,11 @@ export default function SkitForm({ formats }: { formats: FormatOption[] }) {
   const castRows = Array.from({ length: slots }, (_, n) => inputs.cast[n] ?? "");
 
   async function run(sent: HistoryMessage[]) {
-    if (!formRef.current?.reportValidity()) return;
+    if (!sent.length) {
+      if (!formRef.current?.reportValidity()) return;
+      sentInputs.current = { ...inputs, cast: castRows };
+      setHistory([]); // a failed or cut regenerate must not leave Rewrite targeting an old script
+    }
     setBusy(true);
     setOutput("");
     setError("");
@@ -52,7 +58,7 @@ export default function SkitForm({ formats }: { formats: FormatOption[] }) {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ inputs: { ...inputs, cast: castRows }, history: sent }),
+        body: JSON.stringify({ inputs: sentInputs.current, history: sent }),
       });
       if (!res.ok || !res.body) {
         const body = await res.json().catch(() => null);
@@ -236,9 +242,12 @@ export default function SkitForm({ formats }: { formats: FormatOption[] }) {
           <div className="canvas-head">
             <h2 id="script-heading">Script</h2>
             {busy && <span className="live-dot" aria-hidden="true" />}
+            <span aria-live="polite" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" }}>
+              {busy && (status || "Writing…")}
+            </span>
           </div>
 
-          <div className="canvas-body" aria-live="polite">
+          <div className="canvas-body" aria-busy={busy}>
             {error && (
               <p className="notice" role="alert">{error}</p>
             )}

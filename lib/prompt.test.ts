@@ -45,7 +45,8 @@ describe("buildSystemPrompt", () => {
   it("carries content, rules and headings in order", () => {
     const s = buildSystemPrompt(content);
     for (const t of ["POV", "POV BODY TEXT", "Undercover", "UNDERCOVER BODY TEXT", "REFS TEXT", "HEMUT TEXT",
-      "TikTok", "Instagram", "this week", "no real competitor names", "hours-of-service", "couldn't confirm current trends"])
+      "TikTok", "Instagram", "this week", "no real competitor names", "hours-of-service", "couldn't confirm current trends",
+      "On a rewrite, return the full revised script in the same format; search again only if the instruction asks for new trends."])
       expect(s).toContain(t);
     const heads = ["Title", "Trend", "Hooks", "Cast", "Script", "Setting & props", "Caption"].map((h) => s.indexOf(`## ${h}`));
     expect(heads.every((i) => i >= 0)).toBe(true);

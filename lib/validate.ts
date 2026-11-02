@@ -56,10 +56,10 @@ export function validateRequest(body: unknown, formatSlugs: string[]): Result {
       if (m.content.length > 500) return fail("Rewrite instruction must be 500 characters or fewer.");
     }
   }
-  if (users > MAX_USER_MESSAGES) return fail("Too many rewrites in this session.");
+  if (users > MAX_USER_MESSAGES) return fail("Too many rewrites in this session. Hit Regenerate to start fresh.");
   if (history.length && (history[history.length - 1] as { role: string }).role !== "user")
     return fail("History must end with a user message.");
-  if (JSON.stringify(history).length > MAX_HISTORY_CHARS) return fail("Conversation is too long.");
+  if (JSON.stringify(history).length > MAX_HISTORY_CHARS) return fail("Conversation is too long. Hit Regenerate to start fresh.");
 
   return {
     ok: true,

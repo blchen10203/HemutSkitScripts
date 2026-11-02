@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- loose fake stream events and recorded params */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MAX_CONTINUATIONS, MODEL, runGeneration, type StreamFn } from "./generate";
 import type { StreamEvent } from "./types";
@@ -45,7 +46,9 @@ describe("runGeneration", () => {
     expect(calls[0]).toMatchObject({
       model: MODEL, max_tokens: 16000, output_config: { effort: "high" },
       tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 5 }],
-      betas: ["server-side-fallback-2026-07-01"], fallbacks: "default", system: "SYS",
+      betas: ["server-side-fallback-2026-07-01", "thinking-binding-controls-2026-08-01"],
+      thinking: { type: "adaptive", block_binding: { prefix_mismatch_behavior: "drop_block" } },
+      fallbacks: "default", system: "SYS",
     });
     expect(MODEL).toBe("claude-sonnet-5-5");
   });

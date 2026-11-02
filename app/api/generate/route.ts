@@ -10,6 +10,7 @@ export const maxDuration = 300;
 
 // Lazy so a missing ANTHROPIC_API_KEY becomes an error event, not a crash.
 let client: Anthropic | undefined;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- params are a plain record; the beta SDK types lag the preview fields
 const stream: StreamFn = (p) => (client ??= new Anthropic()).beta.messages.stream(p as any) as any;
 
 const json = (error: string, status: number) => Response.json({ error }, { status });

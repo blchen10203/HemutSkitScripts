@@ -4,6 +4,7 @@ export const MODEL = "claude-sonnet-5-5";
 export const MAX_CONTINUATIONS = 3;
 
 export type StreamFn = (params: Record<string, unknown>) =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- stream events are a loosely typed union we only probe
   AsyncIterable<{ type: string; [k: string]: any }> & {
     finalMessage(): Promise<{ stop_reason: string | null; content: unknown[] }>;
   };
@@ -22,7 +23,8 @@ export async function runGeneration(
         max_tokens: 16000,
         output_config: { effort: "high" },
         tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 5 }],
-        betas: ["server-side-fallback-2026-07-01"],
+        betas: ["server-side-fallback-2026-07-01", "thinking-binding-controls-2026-08-01"],
+        thinking: { type: "adaptive", block_binding: { prefix_mismatch_behavior: "drop_block" } },
         fallbacks: "default",
         system,
         messages: [...messages, ...produced],
@@ -35,6 +37,7 @@ export async function runGeneration(
         }
       }
       const final = await s.finalMessage();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SDK content blocks vs HistoryMessage content do not unify
       produced.push({ role: "assistant", content: final.content as any });
       if (final.stop_reason === "refusal") {
         return emit({ type: "error", text: "Claude won't write this one — try toning the premise down" });

@@ -112,7 +112,7 @@ The filled form fields in a labelled list, the pasted reference (if any), and fo
 
 | Case | Behaviour |
 |---|---|
-| Invalid input | 400, message shown above the form; inputs kept |
+| Invalid input | 400, message shown at the top of the Script panel; inputs kept |
 | 429 / 5xx / connection error | SDK retries (default 2); then error event "Couldn't generate, try again"; inputs kept |
 | `stop_reason: "refusal"` after fallback | Error event "Claude won't write this one — try toning the premise down" |
 | Web search error (in-band result) | Claude continues; Trend section says it couldn't confirm current trends |
