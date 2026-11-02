@@ -104,7 +104,7 @@ The filled form fields in a labelled list, the pasted reference (if any), and fo
 1. Page POSTs `{ inputs, history }` to `/api/generate`.
 2. Endpoint validates (`lib/validate.ts`); on failure returns 400 with a message.
 3. Endpoint loads content, builds system + messages (`lib/prompt.ts`), calls `client.messages.stream(...)`.
-4. Endpoint streams newline-delimited JSON events to the page: `{"type":"text","text":"..."}` for script deltas, `{"type":"status","text":"Searching trends…"}` when a `server_tool_use` (web search) block starts, and `{"type":"error","text":"..."}` on failure.
+4. Endpoint streams newline-delimited JSON events to the page: `{"type":"text","text":"..."}` for script deltas, `{"type":"status","text":"Searching trends…"}` when a `server_tool_use` (web search) block starts, `{"type":"error","text":"..."}` on failure, and `{"type":"done","messages":[...]}` at the end, carrying the assistant message(s) unchanged so the page can append them to its history for rewrites. Rewrite requests send only the messages after the first user message; the server rebuilds that first message from `inputs`.
 5. On `stop_reason: "pause_turn"`, endpoint re-sends with the assistant content appended and continues streaming; at most 3 continuations.
 6. Page appends the final assistant text to its history for rewrites.
 
