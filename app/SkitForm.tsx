@@ -2,14 +2,14 @@
 
 import { useRef, useState } from "react";
 import { createEventParser } from "@/lib/ndjson";
-import type { HistoryMessage, SkitInputs, SkitLength, TieIn } from "@/lib/types";
+import { LENGTHS, TIE_INS, type HistoryMessage, type SkitInputs } from "@/lib/types";
+import { applyEvent, EMPTY_VIEW, type View } from "@/lib/view";
 
 type FormatOption = { slug: string; name: string };
 
 const FAIL = "Couldn't generate, try again";
 const CUT = "Cut off — hit Regenerate";
-const TIE_INS: [TieIn, string][] = [["off", "Off"], ["light", "Light"], ["central", "Central"]];
-const LENGTHS: SkitLength[] = ["15s", "30s", "60s"];
+const label = (s: string) => s[0].toUpperCase() + s.slice(1);
 
 const SHAPE = [
   ["## Title", "One line"],
@@ -28,10 +28,8 @@ const DEFAULTS: SkitInputs = {
 
 export default function SkitForm({ formats }: { formats: FormatOption[] }) {
   const [inputs, setInputs] = useState<SkitInputs>(DEFAULTS);
-  const [history, setHistory] = useState<HistoryMessage[]>([]);
-  const [output, setOutput] = useState("");
-  const [status, setStatus] = useState("");
-  const [error, setError] = useState("");
+  const [view, setView] = useState<View>(EMPTY_VIEW);
+  const { output, status, error, history } = view;
   const [busy, setBusy] = useState(false);
   const [instruction, setInstruction] = useState("");
   const [copyNote, setCopyNote] = useState("");
@@ -44,21 +42,21 @@ export default function SkitForm({ formats }: { formats: FormatOption[] }) {
   const slots = Math.min(Math.max(inputs.castSize, 0), 6) || 0;
   const castRows = Array.from({ length: slots }, (_, n) => inputs.cast[n] ?? "");
 
+  const setError = (error: string) => setView((v) => ({ ...v, error }));
+
   async function run(sent: HistoryMessage[]) {
     if (!sent.length) {
       if (!formRef.current?.reportValidity()) return;
       sentInputs.current = { ...inputs, cast: castRows };
-      setHistory([]); // a failed or cut regenerate must not leave Rewrite targeting an old script
     }
     setBusy(true);
-    setOutput("");
-    setError("");
-    setStatus("");
+    // A new Generate/Regenerate also forgets the old script, so a failed one can't leave Rewrite targeting it.
+    setView((v) => ({ ...EMPTY_VIEW, ...(sent.length ? { history: v.history, sig: v.sig } : {}) }));
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ inputs: sentInputs.current, history: sent }),
+        body: JSON.stringify({ inputs: sentInputs.current, history: sent, sig: view.sig }),
       });
       if (!res.ok || !res.body) {
         const body = await res.json().catch(() => null);
@@ -67,19 +65,8 @@ export default function SkitForm({ formats }: { formats: FormatOption[] }) {
       }
       let sawTerminal = false;
       const parser = createEventParser((e) => {
-        if (e.type === "status") {
-          setStatus(e.text);
-          setOutput(""); // drops any preamble written before the search
-        } else if (e.type === "text") {
-          setOutput((o) => o + e.text);
-          setStatus("");
-        } else if (e.type === "error") {
-          sawTerminal = true;
-          setError(e.text);
-        } else if (e.type === "done") {
-          sawTerminal = true;
-          setHistory([...sent, ...e.messages]);
-        }
+        if (e.type === "error" || e.type === "done") sawTerminal = true;
+        setView((v) => applyEvent(v, e, sent));
       });
       const reader = res.body.getReader();
       try {
@@ -98,7 +85,7 @@ export default function SkitForm({ formats }: { formats: FormatOption[] }) {
       setError(FAIL);
     } finally {
       setBusy(false);
-      setStatus("");
+      setView((v) => ({ ...v, status: "" }));
     }
   }
 
@@ -191,11 +178,11 @@ export default function SkitForm({ formats }: { formats: FormatOption[] }) {
               <div className="field">
                 <span className="label" id="tieIn-label">Hemut tie-in</span>
                 <div className="segmented" role="radiogroup" aria-labelledby="tieIn-label">
-                  {TIE_INS.map(([value, label]) => (
+                  {TIE_INS.map((value) => (
                     <label key={value}>
                       <input type="radio" name="tieIn" value={value} checked={inputs.tieIn === value}
                         onChange={() => set("tieIn", value)} />
-                      <span>{label}</span>
+                      <span>{label(value)}</span>
                     </label>
                   ))}
                 </div>

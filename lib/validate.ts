@@ -1,11 +1,9 @@
-import type { GenerateRequest, HistoryMessage, SkitInputs } from "./types";
+import { LENGTHS, TIE_INS, type GenerateRequest, type HistoryMessage, type SkitInputs } from "./types";
 
 type Result = { ok: true; value: GenerateRequest } | { ok: false; error: string };
 
 const MAX_HISTORY_CHARS = 300_000;
 const MAX_USER_MESSAGES = 10;
-const TIE_INS = ["off", "light", "central"];
-const LENGTHS = ["15s", "30s", "60s"];
 
 const isObj = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
@@ -31,9 +29,9 @@ export function validateRequest(body: unknown, formatSlugs: string[]): Result {
   if (typeof format !== "string" || (format !== "auto" && !formatSlugs.includes(format)))
     return fail("Unknown format.");
   const tieIn = i.tieIn ?? "off";
-  if (typeof tieIn !== "string" || !TIE_INS.includes(tieIn)) return fail("Unknown tie-in setting.");
+  if (!(TIE_INS as readonly unknown[]).includes(tieIn)) return fail("Unknown tie-in setting.");
   const length = i.length ?? "30s";
-  if (typeof length !== "string" || !LENGTHS.includes(length)) return fail("Unknown length.");
+  if (!(LENGTHS as readonly unknown[]).includes(length)) return fail("Unknown length.");
 
   const castSize = i.castSize;
   if (typeof castSize !== "number" || !Number.isInteger(castSize) || castSize < 1 || castSize > 6)

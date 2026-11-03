@@ -33,11 +33,7 @@ Markdown, with exactly these sections in this order:
 - no real competitor names; no defamation.
 - No gags about unsafe driving or hours-of-service violations.
 - On a rewrite, return the full revised script in the same format; search again only if the instruction asks for new trends.
-
-## Hemut tie-in levels
-- OFF: do not mention Hemut or trucking unless the topic asks for it.
-- LIGHT: a nod or closing line about Hemut.
-- CENTRAL: the premise is built on a Hemut or freight pain point.
+- Follow the request's Hemut tie-in line.
 
 # Format library
 ${formats}

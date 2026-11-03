@@ -3,7 +3,7 @@ import type { HistoryMessage, StreamEvent } from "./types";
 export const MODEL = "claude-sonnet-5-5";
 export const MAX_CONTINUATIONS = 3;
 
-export type StreamFn = (params: Record<string, unknown>) =>
+export type StreamFn = (params: Record<string, unknown>, signal?: AbortSignal) =>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- stream events are a loosely typed union we only probe
   AsyncIterable<{ type: string; [k: string]: any }> & {
     finalMessage(): Promise<{ stop_reason: string | null; content: unknown[] }>;
@@ -14,6 +14,7 @@ export async function runGeneration(
   system: string,
   messages: HistoryMessage[],
   emit: (e: StreamEvent) => void,
+  signal?: AbortSignal, // aborts the Claude call when the browser goes away
 ): Promise<void> {
   try {
     const produced: HistoryMessage[] = [];
@@ -28,7 +29,7 @@ export async function runGeneration(
         fallbacks: "default",
         system,
         messages: [...messages, ...produced],
-      });
+      }, signal);
       for await (const ev of s) {
         if (ev.type === "content_block_start" && ev.content_block?.type === "server_tool_use") {
           emit({ type: "status", text: "Searching trends…" });
@@ -47,6 +48,7 @@ export async function runGeneration(
     }
     emit({ type: "error", text: "Cut off — hit Regenerate" });
   } catch (err) {
+    if (signal?.aborted) return; // the browser left; nobody to tell
     console.error("generation failed", err);
     emit({ type: "error", text: "Couldn't generate, try again" });
   }

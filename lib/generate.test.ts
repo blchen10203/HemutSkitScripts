@@ -53,6 +53,21 @@ describe("runGeneration", () => {
     expect(MODEL).toBe("claude-sonnet-5-5");
   });
 
+  it("passes the abort signal to every call and stays quiet once aborted", async () => {
+    const ac = new AbortController();
+    const seen: (AbortSignal | undefined)[] = [];
+    const stream: StreamFn = (_p, signal) => {
+      seen.push(signal);
+      ac.abort();
+      throw new Error("aborted");
+    };
+    const events: StreamEvent[] = [];
+    await runGeneration(stream, "SYS", [{ role: "user", content: "hi" }], (e) => events.push(e), ac.signal);
+    expect(seen).toEqual([ac.signal]);
+    expect(events).toEqual([]);
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
   it("continues on pause_turn without a user message", async () => {
     const c1 = [{ type: "server_tool_use" }], c2 = [{ type: "text", text: "x" }];
     const { stream, calls } = fake([{ stop_reason: "pause_turn", content: c1 }, { stop_reason: "end_turn", content: c2 }]);
